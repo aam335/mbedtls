@@ -506,7 +506,13 @@ static int mpi_write_hlp( mbedtls_mpi *X, int radix, char **p, const size_t bufl
     int ret;
     mbedtls_mpi_uint r;
     size_t length = 0;
-    char *p_end = *p + buflen - 1;
+    /*
+     * Set a pointer to the end of the input buffer,
+     * to write from the LSB to MSB. There is no risk of underflow, as buflen
+     * is minimal size of 3, as set in the calling function,
+     * mbedtls_mpi_write_string.
+     */
+    char *p_end = *p + buflen;
 
     if( radix < 2 || radix > 16 )
         return( MBEDTLS_ERR_MPI_BAD_INPUT_DATA );
@@ -516,17 +522,22 @@ static int mpi_write_hlp( mbedtls_mpi *X, int radix, char **p, const size_t bufl
         MBEDTLS_MPI_CHK( mbedtls_mpi_mod_int( &r, X, radix ) );
         MBEDTLS_MPI_CHK( mbedtls_mpi_div_int( X, NULL, X, radix ) );
         /*
-         * Write the residue in the current position, as an  ASCII character.
+         * Write the residue in the current position, as an ASCII character.
          */
         if( r < 10 )
-            *p_end-- = (char)( r + 0x30 );
+            *(--p_end) = (char)( r + 0x30 );
         else
-            *p_end-- = (char)( r + 0x37 );
+            *(--p_end) = (char)( r + 0x37 );
 
         length++;
     } while( mbedtls_mpi_cmp_int( X, 0 ) != 0 && length <= buflen );
 
-    memmove( *p, p_end + 1, length );
+    if( buflen < length )
+    {
+        return( MBEDTLS_ERR_MPI_BUFFER_TOO_SMALL );
+    }
+
+    memmove( *p, p_end, length );
     *p += length;
 
 cleanup:
