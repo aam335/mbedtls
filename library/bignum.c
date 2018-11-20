@@ -513,24 +513,22 @@ static int mpi_write_hlp( mbedtls_mpi *X, int radix, char **p, const size_t bufl
 
     do
     {
-        if( length < buflen )
-        {
-            MBEDTLS_MPI_CHK( mbedtls_mpi_mod_int( &r, X, radix ) );
-            MBEDTLS_MPI_CHK( mbedtls_mpi_div_int( X, NULL, X, radix ) );
-            /*
-             * Write the residue in the current position, as an ASCII character.
-             */
-            if( r < 10 )
-                *(--p_end) = (char)( r + 0x30 );
-            else
-                *(--p_end) = (char)( r + 0x37 );
-
-            length++;
-        }
-        else /* length < buflen */
+        if( length >= buflen )
         {
             return( MBEDTLS_ERR_MPI_BUFFER_TOO_SMALL );
         }
+
+        MBEDTLS_MPI_CHK( mbedtls_mpi_mod_int( &r, X, radix ) );
+        MBEDTLS_MPI_CHK( mbedtls_mpi_div_int( X, NULL, X, radix ) );
+        /*
+         * Write the residue in the current position, as an ASCII character.
+         */
+        if( r < 10 )
+            *(--p_end) = (char)( r + 0x30 );
+        else
+            *(--p_end) = (char)( r + 0x37 );
+
+        length++;
     } while( mbedtls_mpi_cmp_int( X, 0 ) );
 
     memmove( *p, p_end, length );
