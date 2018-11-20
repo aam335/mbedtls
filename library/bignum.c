@@ -501,7 +501,8 @@ cleanup:
 /*
  * Helper to write the digits high-order first.
  */
-static int mpi_write_hlp( mbedtls_mpi *X, int radix, char **p, const size_t buflen )
+static int mpi_write_hlp( mbedtls_mpi *X, int radix,
+                          char **p, const size_t buflen )
 {
     int ret;
     mbedtls_mpi_uint r;
@@ -523,13 +524,13 @@ static int mpi_write_hlp( mbedtls_mpi *X, int radix, char **p, const size_t bufl
         /*
          * Write the residue in the current position, as an ASCII character.
          */
-        if( r < 10 )
-            *(--p_end) = (char)( r + 0x30 );
+        if( r < 0xA )
+            *(--p_end) = (char)( '0' + r );
         else
-            *(--p_end) = (char)( r + 0x37 );
+            *(--p_end) = (char)( 'A' + ( r - 0xA ) );
 
         length++;
-    } while( mbedtls_mpi_cmp_int( X, 0 ) );
+    } while( mbedtls_mpi_cmp_int( X, 0 ) != 0 );
 
     memmove( *p, p_end, length );
     *p += length;
