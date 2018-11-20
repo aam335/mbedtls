@@ -527,6 +527,10 @@ static int mpi_write_hlp( mbedtls_mpi *X, int radix, char **p, const size_t bufl
 
             length++;
         }
+        else /* length < buflen */
+        {
+            return( MBEDTLS_ERR_MPI_BUFFER_TOO_SMALL );
+        }
     } while( mbedtls_mpi_cmp_int( X, 0 ) );
 
     memmove( *p, p_end, length );
