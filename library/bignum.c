@@ -509,9 +509,6 @@ static int mpi_write_hlp( mbedtls_mpi *X, int radix,
     size_t length = 0;
     char *p_end = *p + buflen;
 
-    if( radix < 2 || radix > 16 )
-        return( MBEDTLS_ERR_MPI_BAD_INPUT_DATA );
-
     do
     {
         if( length >= buflen )
