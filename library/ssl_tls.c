@@ -1029,7 +1029,7 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
             ( ret = mbedtls_md_setup( &transform->md_ctx_dec, md_info, 1 ) ) != 0 )
         {
             MBEDTLS_SSL_DEBUG_RET( 1, "mbedtls_md_setup", ret );
-            return( ret );
+            goto end;
         }
 
         /* Get MAC length */
@@ -1099,7 +1099,8 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
 #endif
             {
                 MBEDTLS_SSL_DEBUG_MSG( 1, ( "should never happen" ) );
-                return( MBEDTLS_ERR_SSL_INTERNAL_ERROR );
+                ret = MBEDTLS_ERR_SSL_INTERNAL_ERROR;
+                goto end;
             }
         }
     }
@@ -1153,7 +1154,8 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
 #endif /* MBEDTLS_SSL_SRV_C */
     {
         MBEDTLS_SSL_DEBUG_MSG( 1, ( "should never happen" ) );
-        return( MBEDTLS_ERR_SSL_INTERNAL_ERROR );
+        ret = MBEDTLS_ERR_SSL_INTERNAL_ERROR;
+        goto end;
     }
 
 #if defined(MBEDTLS_SSL_PROTO_SSL3)
@@ -1162,7 +1164,8 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
         if( mac_key_len > sizeof transform->mac_enc )
         {
             MBEDTLS_SSL_DEBUG_MSG( 1, ( "should never happen" ) );
-            return( MBEDTLS_ERR_SSL_INTERNAL_ERROR );
+            ret = MBEDTLS_ERR_SSL_INTERNAL_ERROR;
+            goto end;
         }
 
         memcpy( transform->mac_enc, mac_enc, mac_key_len );
@@ -1186,7 +1189,8 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
 #endif
     {
         MBEDTLS_SSL_DEBUG_MSG( 1, ( "should never happen" ) );
-        return( MBEDTLS_ERR_SSL_INTERNAL_ERROR );
+        ret = MBEDTLS_ERR_SSL_INTERNAL_ERROR;
+        goto end;
     }
 
 #if defined(MBEDTLS_SSL_HW_RECORD_ACCEL)
@@ -1203,7 +1207,8 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
                                         mac_key_len ) ) != 0 )
         {
             MBEDTLS_SSL_DEBUG_RET( 1, "mbedtls_ssl_hw_record_init", ret );
-            return( MBEDTLS_ERR_SSL_HW_ACCEL_FAILED );
+            ret = MBEDTLS_ERR_SSL_HW_ACCEL_FAILED;
+            goto end;
         }
     }
 #endif /* MBEDTLS_SSL_HW_RECORD_ACCEL */
@@ -1233,7 +1238,7 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
         if( ret != 0 && ret != MBEDTLS_ERR_CIPHER_FEATURE_UNAVAILABLE )
         {
             MBEDTLS_SSL_DEBUG_RET( 1, "mbedtls_cipher_setup_psa", ret );
-            return( ret );
+            goto end;
         }
 
         if( ret == 0 )
@@ -1259,7 +1264,7 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
                                  cipher_info ) ) != 0 )
     {
         MBEDTLS_SSL_DEBUG_RET( 1, "mbedtls_cipher_setup", ret );
-        return( ret );
+        goto end;
     }
 
 #if defined(MBEDTLS_USE_PSA_CRYPTO)
@@ -1276,7 +1281,7 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
         if( ret != 0 && ret != MBEDTLS_ERR_CIPHER_FEATURE_UNAVAILABLE )
         {
             MBEDTLS_SSL_DEBUG_RET( 1, "mbedtls_cipher_setup_psa", ret );
-            return( ret );
+            goto end;
         }
 
         if( ret == 0 )
@@ -1302,7 +1307,7 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
                                  cipher_info ) ) != 0 )
     {
         MBEDTLS_SSL_DEBUG_RET( 1, "mbedtls_cipher_setup", ret );
-        return( ret );
+        goto end;
     }
 
     if( ( ret = mbedtls_cipher_setkey( &transform->cipher_ctx_enc, key1,
@@ -1310,7 +1315,7 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
                                MBEDTLS_ENCRYPT ) ) != 0 )
     {
         MBEDTLS_SSL_DEBUG_RET( 1, "mbedtls_cipher_setkey", ret );
-        return( ret );
+        goto end;
     }
 
     if( ( ret = mbedtls_cipher_setkey( &transform->cipher_ctx_dec, key2,
@@ -1318,7 +1323,7 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
                                MBEDTLS_DECRYPT ) ) != 0 )
     {
         MBEDTLS_SSL_DEBUG_RET( 1, "mbedtls_cipher_setkey", ret );
-        return( ret );
+        goto end;
     }
 
 #if defined(MBEDTLS_CIPHER_MODE_CBC)
@@ -1328,14 +1333,14 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
                                              MBEDTLS_PADDING_NONE ) ) != 0 )
         {
             MBEDTLS_SSL_DEBUG_RET( 1, "mbedtls_cipher_set_padding_mode", ret );
-            return( ret );
+            goto end;
         }
 
         if( ( ret = mbedtls_cipher_set_padding_mode( &transform->cipher_ctx_dec,
                                              MBEDTLS_PADDING_NONE ) ) != 0 )
         {
             MBEDTLS_SSL_DEBUG_RET( 1, "mbedtls_cipher_set_padding_mode", ret );
-            return( ret );
+            goto end;
         }
     }
 #endif /* MBEDTLS_CIPHER_MODE_CBC */
@@ -1355,7 +1360,8 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
             {
                 MBEDTLS_SSL_DEBUG_MSG( 1, ( "alloc(%d bytes) failed",
                                     MBEDTLS_SSL_COMPRESS_BUFFER_LEN ) );
-                return( MBEDTLS_ERR_SSL_ALLOC_FAILED );
+                ret = MBEDTLS_ERR_SSL_ALLOC_FAILED;
+                goto end;
             }
         }
 
@@ -1369,14 +1375,16 @@ int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl )
             inflateInit( &transform->ctx_inflate ) != Z_OK )
         {
             MBEDTLS_SSL_DEBUG_MSG( 1, ( "Failed to initialize compression" ) );
-            return( MBEDTLS_ERR_SSL_COMPRESSION_FAILED );
+            ret = MBEDTLS_ERR_SSL_COMPRESSION_FAILED;
+            goto end;
         }
     }
 #endif /* MBEDTLS_ZLIB_SUPPORT */
 
     MBEDTLS_SSL_DEBUG_MSG( 2, ( "<= derive keys" ) );
+end:
 
-    return( 0 );
+    return( ret );
 }
 
 #if defined(MBEDTLS_SSL_PROTO_SSL3)
